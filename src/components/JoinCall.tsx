@@ -1,4 +1,4 @@
-import { createSignal, Match, Switch } from 'solid-js';
+import { createEffect, createSignal, Match, Switch } from 'solid-js';
 import { AsyncValue } from '../utils/asyncValue';
 import { decompressSdp } from '../utils/sdp';
 import { useAsyncValue } from '../utils/useAsyncValue';
@@ -17,19 +17,32 @@ interface Props {
 export default function JoinCall(props: Props) {
   const [offerInput, setOfferInput] = createSignal('');
   const [answer, { track }] = useAsyncValue<string>(null);
+  const [pendingConnect, setPendingConnect] = createSignal<{
+    local: MediaStream;
+    remote: MediaStream;
+  } | null>(null);
+  const [answerCopied, setAnswerCopied] = createSignal(false);
+
+  createEffect(() => {
+    const conn = pendingConnect();
+    if (conn && answerCopied()) {
+      props.onConnected(conn.local, conn.remote);
+    }
+  });
 
   const handleOffer = () => {
     const offerSdp = offerInput().trim();
     if (!offerSdp) return;
+    setPendingConnect(null);
     track(
-      decompressSdp(offerSdp).then((sdp) => {
-        return getLocalStream().then((localStream) => {
+      decompressSdp(offerSdp).then((sdp) =>
+        getLocalStream().then((localStream) => {
           const pc = createPeerConnection(localStream, (remote) => {
-            props.onConnected(localStream, remote);
+            setPendingConnect({ local: localStream, remote });
           });
           return createAnswer(pc, sdp);
-        });
-      }),
+        }),
+      ),
     );
   };
 
@@ -73,7 +86,7 @@ export default function JoinCall(props: Props) {
               <p class="text-sm text-gray-300 font-medium">
                 Send this answer back — then wait for the call to connect
               </p>
-              <SdpBox label="Your answer" sdp={sdp()} />
+              <SdpBox label="Your answer" sdp={sdp()} onCopied={() => setAnswerCopied(true)} />
               <p class="text-xs text-gray-500">
                 The call will connect automatically once they paste your answer.
               </p>

@@ -4,6 +4,7 @@ import { compressSdp } from '../utils/sdp';
 interface Props {
   label: string;
   sdp: string;
+  onCopied?: () => void;
 }
 
 export default function SdpBox(props: Props) {
@@ -15,6 +16,7 @@ export default function SdpBox(props: Props) {
     if (!value) return;
     await navigator.clipboard.writeText(value);
     setCopied(true);
+    props.onCopied?.();
     setTimeout(() => setCopied(false), 2000);
   };
 

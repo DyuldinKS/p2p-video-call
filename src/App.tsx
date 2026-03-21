@@ -1,4 +1,4 @@
-import { createSignal, Match, Switch } from 'solid-js';
+import { batch, createSignal, Match, Switch } from 'solid-js';
 import CallView from './components/CallView';
 import JoinCall from './components/JoinCall';
 import Landing from './components/Landing';
@@ -22,8 +22,10 @@ export default function App() {
 
   const hangUp = () => {
     streams()?.local.getTracks().forEach((t) => t.stop());
-    setStreams(null);
-    setView('landing');
+    batch(() => {
+      setStreams(null);
+      setView('landing');
+    });
   };
 
   return (

@@ -10,20 +10,23 @@ export default function CallView(props: Props) {
   const [muted, setMuted] = createSignal(false);
   const [cameraOff, setCameraOff] = createSignal(false);
 
+  const localStream = props.localStream;
+  const remoteStream = props.remoteStream;
+
   let remoteVideoEl: HTMLVideoElement | undefined;
   let localVideoEl: HTMLVideoElement | undefined;
 
   onMount(() => {
-    if (remoteVideoEl) remoteVideoEl.srcObject = props.remoteStream;
-    if (localVideoEl) localVideoEl.srcObject = props.localStream;
+    if (remoteVideoEl) remoteVideoEl.srcObject = remoteStream;
+    if (localVideoEl) localVideoEl.srcObject = localStream;
   });
 
   onCleanup(() => {
-    props.localStream.getTracks().forEach((t) => t.stop());
+    localStream.getTracks().forEach((t) => t.stop());
   });
 
   const toggleMute = () => {
-    const audioTrack = props.localStream.getAudioTracks()[0];
+    const audioTrack = localStream.getAudioTracks()[0];
     if (audioTrack) {
       audioTrack.enabled = !audioTrack.enabled;
       setMuted(!audioTrack.enabled);
@@ -31,7 +34,7 @@ export default function CallView(props: Props) {
   };
 
   const toggleCamera = () => {
-    const videoTrack = props.localStream.getVideoTracks()[0];
+    const videoTrack = localStream.getVideoTracks()[0];
     if (videoTrack) {
       videoTrack.enabled = !videoTrack.enabled;
       setCameraOff(!videoTrack.enabled);
