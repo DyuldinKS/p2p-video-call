@@ -4,11 +4,11 @@ description: Use when writing code that handles promise-based or async state in 
 version: 1.0.0
 ---
 
-Use `AsyncValue<T, E>` from `src/utils/asyncValue.ts` and the Solid.js hook `useAsyncValue` from `src/utils/useAsyncValue.ts` for any state derived from a promise.
+Use Solid's built-in `createResource` for all async state. Any event-driven trigger can be modeled as setting a nullable signal:
 
 ```ts
-const [data, { track }] = useAsyncValue<User, Error>();
-track(fetchUser(id)); // auto-transitions: NotAsked → Loading → Success | Failure
+const [input, setInput] = createSignal<string | null>(null);
+const [data] = createResource(input, async (value) => fetchSomething(value));
+// trigger on button click: setInput(value)
+// data.loading, data.error, data() — built-in reactive states
 ```
-
-Pattern-match with `.map()` or type guards (`isSuccess`, `isLoading`, `isFailure`, `isNotAsked`).

@@ -1,7 +1,11 @@
-import { createEffect, createSignal, Match, Switch } from 'solid-js';
-import { AsyncValue } from '../utils/asyncValue';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  Match,
+  Switch,
+} from 'solid-js';
 import { decompressSdp } from '../utils/sdp';
-import { useAsyncValue } from '../utils/useAsyncValue';
 import {
   createAnswer,
   createPeerConnection,
@@ -16,12 +20,21 @@ interface Props {
 
 export default function JoinCall(props: Props) {
   const [offerInput, setOfferInput] = createSignal('');
-  const [answer, { track }] = useAsyncValue<string>(null);
+  const [submittedOffer, setSubmittedOffer] = createSignal<string | null>(null);
   const [pendingConnect, setPendingConnect] = createSignal<{
     local: MediaStream;
     remote: MediaStream;
   } | null>(null);
   const [answerCopied, setAnswerCopied] = createSignal(false);
+
+  const [answerSdp] = createResource(submittedOffer, async (offerSdp) => {
+    const sdp = await decompressSdp(offerSdp);
+    const localStream = await getLocalStream();
+    const pc = createPeerConnection(localStream, (remote) => {
+      setPendingConnect({ local: localStream, remote });
+    });
+    return createAnswer(pc, sdp);
+  });
 
   createEffect(() => {
     const conn = pendingConnect();
@@ -34,16 +47,8 @@ export default function JoinCall(props: Props) {
     const offerSdp = offerInput().trim();
     if (!offerSdp) return;
     setPendingConnect(null);
-    track(
-      decompressSdp(offerSdp).then((sdp) =>
-        getLocalStream().then((localStream) => {
-          const pc = createPeerConnection(localStream, (remote) => {
-            setPendingConnect({ local: localStream, remote });
-          });
-          return createAnswer(pc, sdp);
-        }),
-      ),
-    );
+    setAnswerCopied(false);
+    setSubmittedOffer(offerSdp);
   };
 
   return (
@@ -59,7 +64,7 @@ export default function JoinCall(props: Props) {
       </div>
 
       <Switch>
-        <Match when={AsyncValue.isNotAsked(answer()) || AsyncValue.isLoading(answer())}>
+        <Match when={!submittedOffer() || answerSdp.loading}>
           <div class="flex flex-col gap-2">
             <p class="text-sm text-gray-300 font-medium">
               Paste the offer from the other person
@@ -72,21 +77,25 @@ export default function JoinCall(props: Props) {
             />
             <button
               class="self-end px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors disabled:opacity-40"
-              disabled={!offerInput().trim() || AsyncValue.isLoading(answer())}
+              disabled={!offerInput().trim() || answerSdp.loading}
               onClick={handleOffer}
             >
-              {AsyncValue.isLoading(answer()) ? 'Generating…' : 'Generate answer'}
+              {answerSdp.loading ? 'Generating…' : 'Generate answer'}
             </button>
           </div>
         </Match>
 
-        <Match when={answer().data}>
+        <Match when={answerSdp()}>
           {(sdp) => (
             <div class="flex flex-col gap-1">
               <p class="text-sm text-gray-300 font-medium">
                 Send this answer back — then wait for the call to connect
               </p>
-              <SdpBox label="Your answer" sdp={sdp()} onCopied={() => setAnswerCopied(true)} />
+              <SdpBox
+                label="Your answer"
+                sdp={sdp()}
+                onCopied={() => setAnswerCopied(true)}
+              />
               <p class="text-xs text-gray-500">
                 The call will connect automatically once they paste your answer.
               </p>
@@ -94,7 +103,7 @@ export default function JoinCall(props: Props) {
           )}
         </Match>
 
-        <Match when={answer().error}>
+        <Match when={answerSdp.error}>
           {(err) => (
             <>
               <p class="text-red-400 text-sm">{String(err())}</p>
