@@ -1,5 +1,6 @@
 import { createSignal, Match, Switch } from 'solid-js';
 import { AsyncValue } from '../utils/asyncValue';
+import { decompressSdp } from '../utils/sdp';
 import { useAsyncValue } from '../utils/useAsyncValue';
 import {
   createAnswer,
@@ -21,11 +22,13 @@ export default function JoinCall(props: Props) {
     const offerSdp = offerInput().trim();
     if (!offerSdp) return;
     track(
-      getLocalStream().then((localStream) => {
-        const pc = createPeerConnection(localStream, (remote) => {
-          props.onConnected(localStream, remote);
+      decompressSdp(offerSdp).then((sdp) => {
+        return getLocalStream().then((localStream) => {
+          const pc = createPeerConnection(localStream, (remote) => {
+            props.onConnected(localStream, remote);
+          });
+          return createAnswer(pc, sdp);
         });
-        return createAnswer(pc, offerSdp);
       }),
     );
   };

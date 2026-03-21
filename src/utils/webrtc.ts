@@ -78,9 +78,15 @@ export function createPeerConnection(
   }
 
   const remoteStream = new MediaStream();
+
   pc.addEventListener('track', (e) => {
     remoteStream.addTrack(e.track);
-    onRemoteStream(remoteStream);
+  });
+
+  pc.addEventListener('iceconnectionstatechange', () => {
+    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+      onRemoteStream(remoteStream);
+    }
   });
 
   return pc;

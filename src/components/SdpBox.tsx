@@ -1,6 +1,5 @@
-/** Reusable component for displaying a read-only SDP blob with a copy button. */
-
-import { createSignal } from 'solid-js';
+import { createResource, createSignal } from 'solid-js';
+import { compressSdp } from '../utils/sdp';
 
 interface Props {
   label: string;
@@ -9,9 +8,12 @@ interface Props {
 
 export default function SdpBox(props: Props) {
   const [copied, setCopied] = createSignal(false);
+  const [hex] = createResource(() => props.sdp, compressSdp);
 
   const copy = async () => {
-    await navigator.clipboard.writeText(props.sdp);
+    const value = hex();
+    if (!value) return;
+    await navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -21,7 +23,8 @@ export default function SdpBox(props: Props) {
       <div class="flex items-center justify-between">
         <span class="text-sm text-gray-400">{props.label}</span>
         <button
-          class="text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+          class="text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-40"
+          disabled={hex.loading}
           onClick={copy}
         >
           {copied() ? 'Copied!' : 'Copy'}
@@ -31,7 +34,7 @@ export default function SdpBox(props: Props) {
         readOnly
         rows={6}
         class="w-full rounded-lg bg-slate-900 text-green-400 font-mono text-xs p-3 resize-none border border-slate-600 focus:outline-none"
-        value={props.sdp}
+        value={hex() ?? ''}
       />
     </div>
   );

@@ -5,6 +5,7 @@
  */
 
 import { createSignal, onMount, Show } from 'solid-js';
+import { decompressSdp } from '../utils/sdp';
 import {
   acceptAnswer,
   createOffer,
@@ -45,10 +46,11 @@ export default function StartCall(props: Props) {
   });
 
   const submitAnswer = async () => {
-    const sdp = answerInput().trim();
-    if (!sdp || !pc) return;
+    const raw = answerInput().trim();
+    if (!raw || !pc) return;
     try {
       setStep('waiting-answer');
+      const sdp = await decompressSdp(raw);
       await acceptAnswer(pc, sdp);
     } catch (e) {
       setError(String(e));
