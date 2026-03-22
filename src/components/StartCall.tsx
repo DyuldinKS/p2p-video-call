@@ -23,7 +23,6 @@ const StartCall = (props: Props) => {
   const [joinUrl, setJoinUrl] = createSignal('');
   const [compressedOffer, setCompressedOffer] = createSignal('');
   const [copiedUrl, setCopiedUrl] = createSignal(false);
-  const [copiedOffer, setCopiedOffer] = createSignal(false);
   const [answerInput, setAnswerInput] = createSignal('');
   const [error, setError] = createSignal('');
 
@@ -62,12 +61,6 @@ const StartCall = (props: Props) => {
     setTimeout(() => setCopiedUrl(false), 2000);
   };
 
-  const copyOffer = async () => {
-    await navigator.clipboard.writeText(compressedOffer());
-    setCopiedOffer(true);
-    setTimeout(() => setCopiedOffer(false), 2000);
-  };
-
   const submitAnswer = async () => {
     const raw = answerInput().trim();
     if (!raw || !peerSession) return;
@@ -100,27 +93,18 @@ const StartCall = (props: Props) => {
       </Show>
 
       <Show when={step() === 'offer-ready' || step() === 'waiting-answer'}>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-2">
           <p class="text-sm text-gray-300 font-medium">
-            Step 1 — Send this offer to the other person
+            Step 1 — Send URL to join to the other person
           </p>
           <SdpBox label="Your offer" sdp={offerSdp()} />
-          <div class="grid grid-cols-2 gap-2 mt-1">
-            <button
-              class="py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors disabled:opacity-40"
-              disabled={!joinUrl()}
-              onClick={copyJoinUrl}
-            >
-              {copiedUrl() ? 'Copied!' : 'Copy URL to join'}
-            </button>
-            <button
-              class="py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors disabled:opacity-40"
-              disabled={!compressedOffer()}
-              onClick={copyOffer}
-            >
-              {copiedOffer() ? 'Copied!' : 'Copy offer'}
-            </button>
-          </div>
+          <button
+            class="py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors disabled:opacity-40"
+            disabled={!joinUrl()}
+            onClick={copyJoinUrl}
+          >
+            {copiedUrl() ? 'Copied!' : 'Copy join URL'}
+          </button>
         </div>
 
         <div class="flex flex-col gap-2">
@@ -129,7 +113,7 @@ const StartCall = (props: Props) => {
           </p>
           <textarea
             rows={4}
-            placeholder="Paste answer SDP…"
+            placeholder="Paste answer"
             class="w-full rounded-lg bg-slate-900 text-gray-200 font-mono text-xs p-3 resize-none border border-slate-600 focus:outline-none focus:border-blue-500"
             onInput={(e) => setAnswerInput(e.currentTarget.value)}
           />
@@ -145,12 +129,6 @@ const StartCall = (props: Props) => {
 
       <Show when={step() === 'error'}>
         <p class="text-red-400 text-sm">{error()}</p>
-        <button
-          class="self-start text-sm text-gray-400 hover:text-white"
-          onClick={props.onBack}
-        >
-          ← Go back
-        </button>
       </Show>
     </div>
   );

@@ -29,7 +29,7 @@ export const getLocalStream = (): Promise<MediaStream> =>
   navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
 type PeerSessionEvents = {
-  connected: (localStream: MediaStream, remoteStream: MediaStream) => void;
+  connected: (remoteStream: MediaStream) => void;
 };
 
 export class PeerSession {
@@ -61,7 +61,7 @@ export class PeerSession {
     this.pc.addEventListener('connectionstatechange', () => {
       log.info('Connection state:', this.pc.connectionState);
       if (this.pc.connectionState === 'connected') {
-        this.events.emit('connected', this.localStream, remoteStream);
+        this.events.emit('connected', remoteStream);
       }
     });
 

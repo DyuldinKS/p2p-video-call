@@ -84,7 +84,7 @@ const JoinCall = (props: Props) => {
             </p>
             <textarea
               rows={4}
-              placeholder="Paste join URL or SDP…"
+              placeholder="Paste join URL"
               class="w-full rounded-lg bg-slate-900 text-gray-200 font-mono text-xs p-3 resize-none border border-slate-600 focus:outline-none focus:border-blue-500"
               value={offerInput()}
               onInput={(e) => setOfferInput(e.currentTarget.value)}
