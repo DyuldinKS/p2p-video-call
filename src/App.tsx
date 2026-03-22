@@ -16,7 +16,12 @@ const App = () => {
   const hangUp = () => {
     store.peerSession?.stop();
     store.localStream?.getTracks().forEach((t) => t.stop());
-    setStore({ peerSession: undefined, localStream: undefined, remoteStream: undefined });
+    store.remoteStream?.getTracks().forEach((t) => t.stop());
+    setStore({
+      peerSession: undefined,
+      localStream: undefined,
+      remoteStream: undefined,
+    });
     setView('landing');
   };
 
@@ -39,17 +44,14 @@ const App = () => {
         </Match>
 
         <Match when={view() === 'start'}>
-          <StartCall
-            onConnected={onConnected}
-            onBack={() => setView('landing')}
-          />
+          <StartCall onConnected={onConnected} onBack={hangUp} />
         </Match>
 
         <Match when={view() === 'join'}>
           <JoinCall
             initialOffer={initialOffer}
             onConnected={onConnected}
-            onBack={() => setView('landing')}
+            onBack={hangUp}
           />
         </Match>
 
