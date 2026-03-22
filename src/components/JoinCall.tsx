@@ -90,7 +90,7 @@ const JoinCall = (props: Props) => {
               onInput={(e) => setOfferInput(e.currentTarget.value)}
             />
             <button
-              class="self-end px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors disabled:opacity-40"
+              class="w-full px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors disabled:opacity-40"
               disabled={!offerInput().trim() || answerSdp.loading}
               onClick={handleOffer}
             >
@@ -102,7 +102,7 @@ const JoinCall = (props: Props) => {
         <Match when={answerSdp()}>
           {(sdp) => (
             <div class="flex flex-col gap-4">
-              <div class="flex flex-col gap-1">
+              <div class="flex flex-col gap-2">
                 <p class="text-sm text-gray-300 font-medium">
                   Step 1 — Copy your answer and send it to the host
                 </p>

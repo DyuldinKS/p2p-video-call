@@ -9,7 +9,7 @@ const Landing = (props: Props) => {
       <p class="text-gray-400 text-center max-w-sm">
         Exchange connection info manually — no server needed.
       </p>
-      <div class="flex gap-4">
+      <div class="flex gap-2">
         <button
           class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
           onClick={props.onStart}

@@ -33,7 +33,12 @@ const App = () => {
 
   return (
     <div class="flex flex-col min-h-screen p-6 box-border bg-slate-800 gap-y-4">
-      <h1 class="text-2xl font-bold text-gray-300">p2p video call</h1>
+      <h1
+        class="text-2xl font-bold text-gray-300 cursor-pointer hover:text-white transition-colors w-fit"
+        onClick={hangUp}
+      >
+        p2p video call
+      </h1>
 
       <Switch>
         <Match when={view() === 'landing'}>
