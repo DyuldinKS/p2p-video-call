@@ -1,3 +1,7 @@
+import { createLogger } from './logger';
+
+const log = createLogger('webrtc');
+
 export type PeerRole = 'caller' | 'callee';
 
 export interface PeerConnection {
@@ -9,6 +13,8 @@ const RTC_CONFIG: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
 
+log.info('ICE servers', RTC_CONFIG.iceServers);
+
 /** Wait for ICE gathering to complete, then return the local description SDP. */
 function waitForIceGathering(pc: RTCPeerConnection): Promise<string> {
   return new Promise((resolve) => {
@@ -17,6 +23,7 @@ function waitForIceGathering(pc: RTCPeerConnection): Promise<string> {
       return;
     }
     pc.addEventListener('icegatheringstatechange', () => {
+      log.debug('ICE gathering state:', pc.iceGatheringState);
       if (pc.iceGatheringState === 'complete') {
         resolve(pc.localDescription!.sdp);
       }
@@ -84,8 +91,19 @@ export function createPeerConnection(
   });
 
   pc.addEventListener('iceconnectionstatechange', () => {
+    log.info('ICE connection state:', pc.iceConnectionState);
     if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
       onRemoteStream(remoteStream);
+    }
+  });
+
+  pc.addEventListener('signalingstatechange', () => {
+    log.debug('Signaling state:', pc.signalingState);
+  });
+
+  pc.addEventListener('icecandidate', (e) => {
+    if (e.candidate) {
+      log.debug('ICE candidate:', e.candidate.candidate);
     }
   });
 
