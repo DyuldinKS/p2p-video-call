@@ -1,4 +1,4 @@
-import { batch, createSignal, Match, Switch } from 'solid-js';
+import { batch, createEffect, createSignal, Match, Switch } from 'solid-js';
 import CallView from './components/CallView';
 import JoinCall from './components/JoinCall';
 import Landing from './components/Landing';
@@ -12,7 +12,8 @@ interface CallStreams {
 }
 
 const App = () => {
-  const [view, setView] = createSignal<View>('landing');
+  const initialOffer = location.pathname.slice(1) || undefined;
+  const [view, setView] = createSignal<View>(initialOffer ? 'join' : 'landing');
   const [streams, setStreams] = createSignal<CallStreams | null>(null);
 
   const onConnected = (local: MediaStream, remote: MediaStream) => {
@@ -21,12 +22,20 @@ const App = () => {
   };
 
   const hangUp = () => {
-    streams()?.local.getTracks().forEach((t) => t.stop());
+    streams()
+      ?.local.getTracks()
+      .forEach((t) => t.stop());
     batch(() => {
       setStreams(null);
       setView('landing');
     });
   };
+
+  createEffect(() => {
+    if (view() === 'landing') {
+      history.replaceState(null, '', '/');
+    }
+  });
 
   return (
     <div class="flex flex-col min-h-screen p-6 box-border bg-slate-800 gap-y-4">
@@ -34,15 +43,25 @@ const App = () => {
 
       <Switch>
         <Match when={view() === 'landing'}>
-          <Landing onStart={() => setView('start')} onJoin={() => setView('join')} />
+          <Landing
+            onStart={() => setView('start')}
+            onJoin={() => setView('join')}
+          />
         </Match>
 
         <Match when={view() === 'start'}>
-          <StartCall onConnected={onConnected} onBack={() => setView('landing')} />
+          <StartCall
+            onConnected={onConnected}
+            onBack={() => setView('landing')}
+          />
         </Match>
 
         <Match when={view() === 'join'}>
-          <JoinCall onConnected={onConnected} onBack={() => setView('landing')} />
+          <JoinCall
+            initialOffer={initialOffer}
+            onConnected={onConnected}
+            onBack={() => setView('landing')}
+          />
         </Match>
 
         <Match when={view() === 'call'}>
