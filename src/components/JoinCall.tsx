@@ -6,7 +6,7 @@ import {
   Switch,
 } from 'solid-js';
 import { compressSdp, decompressSdp } from '../utils/sdp';
-import { callStore } from '../utils/callStore';
+import { setStore } from '../utils/callStore';
 import { getLocalStream, PeerSession } from '../utils/webrtc';
 import SdpBox from './SdpBox';
 
@@ -34,15 +34,17 @@ const JoinCall = (props: Props) => {
     const compressed = extractCompressed(input);
     const sdp = await decompressSdp(compressed);
     const localStream = await getLocalStream();
-    const session = new PeerSession();
-    callStore.setItem('peerSession', session);
-    callStore.setItem('localStream', localStream);
-    onCleanup(session.on('connected', (local, remote) => {
-      callStore.setItem('remoteStream', remote);
-      props.onConnected();
-    }));
-    session.start(localStream);
-    return session.createAnswer(sdp);
+    const peerSession = new PeerSession();
+    setStore('peerSession', peerSession);
+    setStore('localStream', localStream);
+    onCleanup(
+      peerSession.on('connected', (remoteStream) => {
+        setStore('remoteStream', remoteStream);
+        props.onConnected();
+      }),
+    );
+    peerSession.start(localStream);
+    return peerSession.createAnswer(sdp);
   });
 
   const [compressedAnswer] = createResource(answerSdp, compressSdp);

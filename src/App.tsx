@@ -1,5 +1,5 @@
-import { batch, createEffect, createSignal, Match, Switch } from 'solid-js';
-import { callStore } from './utils/callStore';
+import { createEffect, createSignal, Match, Switch } from 'solid-js';
+import { store, setStore } from './utils/callStore';
 import CallView from './components/CallView';
 import JoinCall from './components/JoinCall';
 import Landing from './components/Landing';
@@ -7,34 +7,17 @@ import StartCall from './components/StartCall';
 
 type View = 'landing' | 'start' | 'join' | 'call';
 
-interface CallStreams {
-  local: MediaStream;
-  remote: MediaStream;
-}
-
 const App = () => {
   const initialOffer = location.pathname.slice(1) || undefined;
   const [view, setView] = createSignal<View>(initialOffer ? 'join' : 'landing');
-  const [streams, setStreams] = createSignal<CallStreams | null>(null);
 
-  const onConnected = () => {
-    setStreams({
-      local: callStore.getItem('localStream')!,
-      remote: callStore.getItem('remoteStream')!,
-    });
-    setView('call');
-  };
+  const onConnected = () => setView('call');
 
   const hangUp = () => {
-    callStore.getItem('peerSession')?.stop();
-    callStore.getItem('localStream')?.getTracks().forEach((t) => t.stop());
-    callStore.removeItem('peerSession');
-    callStore.removeItem('localStream');
-    callStore.removeItem('remoteStream');
-    batch(() => {
-      setStreams(null);
-      setView('landing');
-    });
+    store.peerSession?.stop();
+    store.localStream?.getTracks().forEach((t) => t.stop());
+    setStore({ peerSession: undefined, localStream: undefined, remoteStream: undefined });
+    setView('landing');
   };
 
   createEffect(() => {
@@ -72,8 +55,8 @@ const App = () => {
 
         <Match when={view() === 'call'}>
           <CallView
-            localStream={streams()!.local}
-            remoteStream={streams()!.remote}
+            localStream={store.localStream!}
+            remoteStream={store.remoteStream!}
             onHangUp={hangUp}
           />
         </Match>

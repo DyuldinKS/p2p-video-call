@@ -6,7 +6,7 @@
 
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { compressSdp, decompressSdp } from '../utils/sdp';
-import { callStore } from '../utils/callStore';
+import { store, setStore } from '../utils/callStore';
 import { getLocalStream, PeerSession } from '../utils/webrtc';
 import SdpBox from './SdpBox';
 
@@ -27,21 +27,23 @@ const StartCall = (props: Props) => {
   const [answerInput, setAnswerInput] = createSignal('');
   const [error, setError] = createSignal('');
 
-  let session: PeerSession | undefined;
+  let peerSession: PeerSession | undefined;
   let localStream: MediaStream | undefined;
 
   onMount(async () => {
     try {
       localStream = await getLocalStream();
-      session = new PeerSession();
-      callStore.setItem('peerSession', session);
-      callStore.setItem('localStream', localStream);
-      onCleanup(session.on('connected', (local, remote) => {
-        callStore.setItem('remoteStream', remote);
-        props.onConnected();
-      }));
-      session.start(localStream);
-      const sdp = await session.createOffer();
+      peerSession = new PeerSession();
+      setStore('peerSession', peerSession);
+      setStore('localStream', localStream);
+      onCleanup(
+        peerSession.on('connected', (remoteStream) => {
+          setStore('remoteStream', remoteStream);
+          props.onConnected();
+        }),
+      );
+      peerSession.start(localStream);
+      const sdp = await peerSession.createOffer();
       setOfferSdp(sdp);
       setStep('offer-ready');
       const compressed = await compressSdp(sdp);
@@ -68,11 +70,11 @@ const StartCall = (props: Props) => {
 
   const submitAnswer = async () => {
     const raw = answerInput().trim();
-    if (!raw || !session) return;
+    if (!raw || !peerSession) return;
     try {
       setStep('waiting-answer');
       const sdp = await decompressSdp(raw);
-      await session.acceptAnswer(sdp);
+      await peerSession.acceptAnswer(sdp);
     } catch (e) {
       setError(String(e));
       setStep('error');
