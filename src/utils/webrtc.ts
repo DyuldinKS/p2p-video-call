@@ -2,110 +2,89 @@ import { createLogger } from './logger';
 
 const log = createLogger('webrtc');
 
-export type PeerRole = 'caller' | 'callee';
-
-export interface PeerConnection {
-  pc: RTCPeerConnection;
-  localStream: MediaStream;
-}
-
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
 
 log.info('ICE servers', RTC_CONFIG.iceServers);
 
-/** Wait for ICE gathering to complete, then return the local description SDP. */
-const waitForIceGathering = (pc: RTCPeerConnection): Promise<string> => {
-  return new Promise((resolve) => {
+const waitForIceGathering = (pc: RTCPeerConnection): Promise<string> =>
+  new Promise((resolve) => {
     if (pc.iceGatheringState === 'complete') {
       resolve(pc.localDescription!.sdp);
       return;
     }
-    pc.addEventListener('icegatheringstatechange', () => {
+    const onStateChange = () => {
       log.debug('ICE gathering state:', pc.iceGatheringState);
       if (pc.iceGatheringState === 'complete') {
+        pc.removeEventListener('icegatheringstatechange', onStateChange);
         resolve(pc.localDescription!.sdp);
       }
-    });
+    };
+    pc.addEventListener('icegatheringstatechange', onStateChange);
   });
-}
 
-export const getLocalStream = async (): Promise<MediaStream> => {
-  return navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-}
+export const getLocalStream = (): Promise<MediaStream> =>
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-/**
- * Caller side: create offer, set local description, wait for ICE gathering.
- * Returns the full SDP offer string to share with the callee.
- */
-export const createOffer = async (pc: RTCPeerConnection): Promise<string> => {
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  return waitForIceGathering(pc);
-}
+export class PeerSession {
+  private pc!: RTCPeerConnection;
 
-/**
- * Callee side: set remote description from offer SDP, create answer,
- * set local description, wait for ICE gathering.
- * Returns the full SDP answer string to share with the caller.
- */
-export const createAnswer = async (
-  pc: RTCPeerConnection,
-  offerSdp: string,
-): Promise<string> => {
-  await pc.setRemoteDescription({ type: 'offer', sdp: offerSdp });
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  return waitForIceGathering(pc);
-}
+  start(
+    localStream: MediaStream,
+    onRemoteStream: (stream: MediaStream) => void,
+  ): void {
+    this.pc = new RTCPeerConnection(RTC_CONFIG);
 
-/**
- * Caller side: set the remote description from the callee's answer SDP.
- */
-export const acceptAnswer = async (
-  pc: RTCPeerConnection,
-  answerSdp: string,
-): Promise<void> => {
-  await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
-}
+    for (const track of localStream.getTracks()) {
+      this.pc.addTrack(track, localStream);
+    }
 
-/**
- * Create a new RTCPeerConnection, attach local stream tracks,
- * and wire up the remote stream callback.
- */
-export const createPeerConnection = (
-  localStream: MediaStream,
-  onRemoteStream: (stream: MediaStream) => void,
-): RTCPeerConnection => {
-  const pc = new RTCPeerConnection(RTC_CONFIG);
+    const remoteStream = new MediaStream();
 
-  for (const track of localStream.getTracks()) {
-    pc.addTrack(track, localStream);
+    this.pc.addEventListener('track', (e) => {
+      remoteStream.addTrack(e.track);
+    });
+
+    this.pc.addEventListener('iceconnectionstatechange', () => {
+      log.info('ICE connection state:', this.pc.iceConnectionState);
+      if (
+        this.pc.iceConnectionState === 'connected' ||
+        this.pc.iceConnectionState === 'completed'
+      ) {
+        onRemoteStream(remoteStream);
+      }
+    });
+
+    this.pc.addEventListener('signalingstatechange', () => {
+      log.debug('Signaling state:', this.pc.signalingState);
+    });
+
+    this.pc.addEventListener('icecandidate', (e) => {
+      if (e.candidate) {
+        log.debug('ICE candidate:', e.candidate.candidate);
+      }
+    });
   }
 
-  const remoteStream = new MediaStream();
+  async createOffer(): Promise<string> {
+    const offer = await this.pc.createOffer();
+    await this.pc.setLocalDescription(offer);
+    return waitForIceGathering(this.pc);
+  }
 
-  pc.addEventListener('track', (e) => {
-    remoteStream.addTrack(e.track);
-  });
+  async createAnswer(offerSdp: string): Promise<string> {
+    await this.pc.setRemoteDescription({ type: 'offer', sdp: offerSdp });
+    const answer = await this.pc.createAnswer();
+    await this.pc.setLocalDescription(answer);
+    return waitForIceGathering(this.pc);
+  }
 
-  pc.addEventListener('iceconnectionstatechange', () => {
-    log.info('ICE connection state:', pc.iceConnectionState);
-    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-      onRemoteStream(remoteStream);
-    }
-  });
+  async acceptAnswer(answerSdp: string): Promise<void> {
+    await this.pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+  }
 
-  pc.addEventListener('signalingstatechange', () => {
-    log.debug('Signaling state:', pc.signalingState);
-  });
-
-  pc.addEventListener('icecandidate', (e) => {
-    if (e.candidate) {
-      log.debug('ICE candidate:', e.candidate.candidate);
-    }
-  });
-
-  return pc;
+  stop(): void {
+    this.pc?.close();
+  }
 }

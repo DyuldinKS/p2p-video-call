@@ -1,4 +1,5 @@
 import { batch, createEffect, createSignal, Match, Switch } from 'solid-js';
+import { callStore } from './utils/callStore';
 import CallView from './components/CallView';
 import JoinCall from './components/JoinCall';
 import Landing from './components/Landing';
@@ -22,9 +23,11 @@ const App = () => {
   };
 
   const hangUp = () => {
-    streams()
-      ?.local.getTracks()
-      .forEach((t) => t.stop());
+    callStore.getItem('peerSession')?.stop();
+    callStore.getItem('localStream')?.getTracks().forEach((t) => t.stop());
+    callStore.removeItem('peerSession');
+    callStore.removeItem('localStream');
+    callStore.removeItem('remoteStream');
     batch(() => {
       setStreams(null);
       setView('landing');

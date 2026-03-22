@@ -6,12 +6,8 @@
 
 import { createSignal, onMount, Show } from 'solid-js';
 import { compressSdp, decompressSdp } from '../utils/sdp';
-import {
-  acceptAnswer,
-  createOffer,
-  createPeerConnection,
-  getLocalStream,
-} from '../utils/webrtc';
+import { callStore } from '../utils/callStore';
+import { getLocalStream, PeerSession } from '../utils/webrtc';
 import SdpBox from './SdpBox';
 
 interface Props {
@@ -31,16 +27,20 @@ const StartCall = (props: Props) => {
   const [answerInput, setAnswerInput] = createSignal('');
   const [error, setError] = createSignal('');
 
-  let pc: RTCPeerConnection | undefined;
+  let session: PeerSession | undefined;
   let localStream: MediaStream | undefined;
 
   onMount(async () => {
     try {
       localStream = await getLocalStream();
-      pc = createPeerConnection(localStream, (remote) => {
+      session = new PeerSession();
+      callStore.setItem('peerSession', session);
+      callStore.setItem('localStream', localStream);
+      session.start(localStream, (remote) => {
+        callStore.setItem('remoteStream', remote);
         props.onConnected(localStream!, remote);
       });
-      const sdp = await createOffer(pc);
+      const sdp = await session.createOffer();
       setOfferSdp(sdp);
       setStep('offer-ready');
       const compressed = await compressSdp(sdp);
@@ -67,11 +67,11 @@ const StartCall = (props: Props) => {
 
   const submitAnswer = async () => {
     const raw = answerInput().trim();
-    if (!raw || !pc) return;
+    if (!raw || !session) return;
     try {
       setStep('waiting-answer');
       const sdp = await decompressSdp(raw);
-      await acceptAnswer(pc, sdp);
+      await session.acceptAnswer(sdp);
     } catch (e) {
       setError(String(e));
       setStep('error');
