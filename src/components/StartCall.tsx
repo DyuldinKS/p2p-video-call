@@ -21,7 +21,6 @@ const StartCall = (props: Props) => {
   const [step, setStep] = createSignal<Step>('init');
   const [offerSdp, setOfferSdp] = createSignal('');
   const [joinUrl, setJoinUrl] = createSignal('');
-  const [compressedOffer, setCompressedOffer] = createSignal('');
   const [copiedUrl, setCopiedUrl] = createSignal(false);
   const [answerInput, setAnswerInput] = createSignal('');
   const [error, setError] = createSignal('');
@@ -46,7 +45,6 @@ const StartCall = (props: Props) => {
       setOfferSdp(sdp);
       setStep('offer-ready');
       const compressed = await compressSdp(sdp);
-      setCompressedOffer(compressed);
       setJoinUrl(`${location.origin}/${compressed}`);
       history.replaceState(null, '', `/${compressed}`);
     } catch (e) {
