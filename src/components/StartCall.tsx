@@ -45,8 +45,12 @@ const StartCall = (props: Props) => {
       setOfferSdp(sdp);
       setStep('offer-ready');
       const compressed = await compressSdp(sdp);
-      setJoinUrl(`${location.origin}/${compressed}`);
-      history.replaceState(null, '', `/${compressed}`);
+      const url = `${location.origin}/${compressed}`;
+      setJoinUrl(url);
+
+      if (localStorage.getItem('devAutoCopy') === 'true') {
+        copyJoinUrl();
+      }
     } catch (e) {
       setError(String(e));
       setStep('error');

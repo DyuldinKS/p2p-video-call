@@ -1,4 +1,5 @@
 import {
+  createEffect,
   createResource,
   createSignal,
   Match,
@@ -49,6 +50,12 @@ const JoinCall = (props: Props) => {
 
   const [compressedAnswer] = createResource(answerSdp, compressSdp);
   const [copiedAnswer, setCopiedAnswer] = createSignal(false);
+
+  createEffect(() => {
+    if (compressedAnswer() && localStorage.getItem('devAutoCopy') === 'true') {
+      copyAnswer();
+    }
+  });
 
   const copyAnswer = async () => {
     const val = compressedAnswer();

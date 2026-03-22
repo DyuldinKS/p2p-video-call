@@ -26,16 +26,32 @@ const waitForIceGathering = (pc: RTCPeerConnection): Promise<string> =>
   });
 
 export const getLocalStream = (): Promise<MediaStream> =>
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      width: { ideal: 1920 },
+    },
+    audio: {
+      noiseSuppression: true,
+      autoGainControl: true,
+      ...((navigator.mediaDevices.getSupportedConstraints() as any)
+        .voiceIsolation
+        ? ({ voiceIsolation: true } as any)
+        : null),
+    },
+  });
 
 type PeerSessionEvents = {
   connected: (remoteStream: MediaStream) => void;
 };
 
+let peerSeq = 0;
+
 export class PeerSession {
   private pc!: RTCPeerConnection;
   private localStream!: MediaStream;
   private events = new EventEmitter<PeerSessionEvents>();
+  private seq = peerSeq++;
+  private logger = createLogger(`peerSession:${this.seq}`);
 
   on<K extends keyof PeerSessionEvents>(
     event: K,
@@ -45,6 +61,7 @@ export class PeerSession {
   }
 
   start(localStream: MediaStream): void {
+    this.logger.info('start');
     this.localStream = localStream;
     this.pc = new RTCPeerConnection(RTC_CONFIG);
 
@@ -94,6 +111,7 @@ export class PeerSession {
   }
 
   stop(): void {
+    this.logger.info('stop');
     this.pc?.close();
   }
 }

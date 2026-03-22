@@ -42,14 +42,14 @@ const CallView = (props: Props) => {
   };
 
   return (
-    <div class="flex flex-col flex-1 gap-4">
+    <div class="flex flex-col flex-1 min-h-0 gap-4">
       {/* Remote video — main area */}
-      <div class="relative flex-1 rounded-2xl overflow-hidden bg-slate-900">
+      <div class="relative flex-1 min-h-0 rounded-2xl overflow-hidden bg-slate-900">
         <video
           ref={remoteVideoEl}
           autoplay
           playsinline
-          class="w-full h-full object-cover"
+          class="w-full h-full object-contain"
         />
 
         {/* Local video — picture-in-picture */}
@@ -65,37 +65,34 @@ const CallView = (props: Props) => {
       </div>
 
       {/* Controls */}
-      <div class="flex items-center justify-center gap-4 pb-2">
+      <div class="flex items-center justify-center gap-2">
         <button
-          class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+          class="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
           classList={{
-            'bg-slate-600 hover:bg-slate-500': !muted(),
-            'bg-red-600 hover:bg-red-500': muted(),
+            'bg-blue-700 hover:bg-blue-600': !muted(),
+            'bg-slate-700 hover:bg-slate-600': muted(),
           }}
           onClick={toggleMute}
-          title={muted() ? 'Unmute' : 'Mute'}
         >
-          {muted() ? '🔇' : '🎙️'}
+          Mic
         </button>
 
         <button
-          class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center transition-colors text-xl"
-          onClick={props.onHangUp}
-          title="Hang up"
-        >
-          📵
-        </button>
-
-        <button
-          class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+          class="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
           classList={{
-            'bg-slate-600 hover:bg-slate-500': !cameraOff(),
-            'bg-red-600 hover:bg-red-500': cameraOff(),
+            'bg-blue-700 hover:bg-blue-600': !cameraOff(),
+            'bg-slate-700 hover:bg-slate-600': cameraOff(),
           }}
           onClick={toggleCamera}
-          title={cameraOff() ? 'Turn camera on' : 'Turn camera off'}
         >
-          {cameraOff() ? '🚫' : '📷'}
+          Camera
+        </button>
+
+        <button
+          class="px-5 py-2 rounded-lg bg-orange-700 hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
+          onClick={props.onHangUp}
+        >
+          Hang up
         </button>
       </div>
     </div>
