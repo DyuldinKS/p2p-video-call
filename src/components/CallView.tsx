@@ -6,7 +6,7 @@ interface Props {
   onHangUp: () => void;
 }
 
-export default function CallView(props: Props) {
+const CallView = (props: Props) => {
   const [muted, setMuted] = createSignal(false);
   const [cameraOff, setCameraOff] = createSignal(false);
 
@@ -100,4 +100,6 @@ export default function CallView(props: Props) {
       </div>
     </div>
   );
-}
+};
+
+export default CallView;

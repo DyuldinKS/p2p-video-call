@@ -11,7 +11,7 @@ interface CallStreams {
   remote: MediaStream;
 }
 
-export default function App() {
+const App = () => {
   const [view, setView] = createSignal<View>('landing');
   const [streams, setStreams] = createSignal<CallStreams | null>(null);
 
@@ -55,4 +55,6 @@ export default function App() {
       </Switch>
     </div>
   );
-}
+};
+
+export default App;

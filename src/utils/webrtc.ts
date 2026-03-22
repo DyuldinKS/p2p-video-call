@@ -16,7 +16,7 @@ const RTC_CONFIG: RTCConfiguration = {
 log.info('ICE servers', RTC_CONFIG.iceServers);
 
 /** Wait for ICE gathering to complete, then return the local description SDP. */
-function waitForIceGathering(pc: RTCPeerConnection): Promise<string> {
+const waitForIceGathering = (pc: RTCPeerConnection): Promise<string> => {
   return new Promise((resolve) => {
     if (pc.iceGatheringState === 'complete') {
       resolve(pc.localDescription!.sdp);
@@ -31,7 +31,7 @@ function waitForIceGathering(pc: RTCPeerConnection): Promise<string> {
   });
 }
 
-export async function getLocalStream(): Promise<MediaStream> {
+export const getLocalStream = async (): Promise<MediaStream> => {
   return navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 }
 
@@ -39,7 +39,7 @@ export async function getLocalStream(): Promise<MediaStream> {
  * Caller side: create offer, set local description, wait for ICE gathering.
  * Returns the full SDP offer string to share with the callee.
  */
-export async function createOffer(pc: RTCPeerConnection): Promise<string> {
+export const createOffer = async (pc: RTCPeerConnection): Promise<string> => {
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   return waitForIceGathering(pc);
@@ -50,10 +50,10 @@ export async function createOffer(pc: RTCPeerConnection): Promise<string> {
  * set local description, wait for ICE gathering.
  * Returns the full SDP answer string to share with the caller.
  */
-export async function createAnswer(
+export const createAnswer = async (
   pc: RTCPeerConnection,
   offerSdp: string,
-): Promise<string> {
+): Promise<string> => {
   await pc.setRemoteDescription({ type: 'offer', sdp: offerSdp });
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
@@ -63,10 +63,10 @@ export async function createAnswer(
 /**
  * Caller side: set the remote description from the callee's answer SDP.
  */
-export async function acceptAnswer(
+export const acceptAnswer = async (
   pc: RTCPeerConnection,
   answerSdp: string,
-): Promise<void> {
+): Promise<void> => {
   await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
 }
 
@@ -74,10 +74,10 @@ export async function acceptAnswer(
  * Create a new RTCPeerConnection, attach local stream tracks,
  * and wire up the remote stream callback.
  */
-export function createPeerConnection(
+export const createPeerConnection = (
   localStream: MediaStream,
   onRemoteStream: (stream: MediaStream) => void,
-): RTCPeerConnection {
+): RTCPeerConnection => {
   const pc = new RTCPeerConnection(RTC_CONFIG);
 
   for (const track of localStream.getTracks()) {

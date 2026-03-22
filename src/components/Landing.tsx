@@ -3,7 +3,7 @@ interface Props {
   onJoin: () => void;
 }
 
-export default function Landing(props: Props) {
+const Landing = (props: Props) => {
   return (
     <div class="flex flex-col items-center justify-center flex-1 gap-6">
       <p class="text-gray-400 text-center max-w-sm">
@@ -25,4 +25,6 @@ export default function Landing(props: Props) {
       </div>
     </div>
   );
-}
+};
+
+export default Landing;

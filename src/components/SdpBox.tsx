@@ -7,7 +7,7 @@ interface Props {
   onCopied?: () => void;
 }
 
-export default function SdpBox(props: Props) {
+const SdpBox = (props: Props) => {
   const [copied, setCopied] = createSignal(false);
   const [hex] = createResource(() => props.sdp, compressSdp);
 
@@ -40,4 +40,6 @@ export default function SdpBox(props: Props) {
       />
     </div>
   );
-}
+};
+
+export default SdpBox;

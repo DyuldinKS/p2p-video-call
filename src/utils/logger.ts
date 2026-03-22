@@ -5,7 +5,7 @@ export interface Logger {
   error: (...args: unknown[]) => void;
 }
 
-export function createLogger(prefix: string): Logger {
+export const createLogger = (prefix: string): Logger => {
   const getTs = { toString: () => new Date().toISOString() };
   const tsParts = ['%c%s', 'color:#999;', getTs] as const;
   return {

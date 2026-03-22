@@ -18,7 +18,7 @@ interface Props {
   onBack: () => void;
 }
 
-export default function JoinCall(props: Props) {
+const JoinCall = (props: Props) => {
   const [offerInput, setOfferInput] = createSignal('');
   const [submittedOffer, setSubmittedOffer] = createSignal<string | null>(null);
   const [pendingConnect, setPendingConnect] = createSignal<{
@@ -119,4 +119,6 @@ export default function JoinCall(props: Props) {
       </Switch>
     </div>
   );
-}
+};
+
+export default JoinCall;

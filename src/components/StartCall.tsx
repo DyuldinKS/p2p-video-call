@@ -21,7 +21,7 @@ interface Props {
 
 type Step = 'init' | 'offer-ready' | 'waiting-answer' | 'error';
 
-export default function StartCall(props: Props) {
+const StartCall = (props: Props) => {
   const [step, setStep] = createSignal<Step>('init');
   const [offerSdp, setOfferSdp] = createSignal('');
   const [answerInput, setAnswerInput] = createSignal('');
@@ -109,4 +109,6 @@ export default function StartCall(props: Props) {
       </Show>
     </div>
   );
-}
+};
+
+export default StartCall;
