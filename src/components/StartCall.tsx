@@ -4,14 +4,14 @@
  * 2. User pastes callee's answer SDP → connection established
  */
 
-import { createSignal, onMount, Show } from 'solid-js';
+import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { compressSdp, decompressSdp } from '../utils/sdp';
 import { callStore } from '../utils/callStore';
 import { getLocalStream, PeerSession } from '../utils/webrtc';
 import SdpBox from './SdpBox';
 
 interface Props {
-  onConnected: (local: MediaStream, remote: MediaStream) => void;
+  onConnected: () => void;
   onBack: () => void;
 }
 
@@ -36,10 +36,11 @@ const StartCall = (props: Props) => {
       session = new PeerSession();
       callStore.setItem('peerSession', session);
       callStore.setItem('localStream', localStream);
-      session.start(localStream, (remote) => {
+      onCleanup(session.on('connected', (local, remote) => {
         callStore.setItem('remoteStream', remote);
-        props.onConnected(localStream!, remote);
-      });
+        props.onConnected();
+      }));
+      session.start(localStream);
       const sdp = await session.createOffer();
       setOfferSdp(sdp);
       setStep('offer-ready');

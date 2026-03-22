@@ -1,3 +1,4 @@
+import { EventEmitter } from './eventEmitter';
 import { createLogger } from './logger';
 
 const log = createLogger('webrtc');
@@ -27,13 +28,24 @@ const waitForIceGathering = (pc: RTCPeerConnection): Promise<string> =>
 export const getLocalStream = (): Promise<MediaStream> =>
   navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
+type PeerSessionEvents = {
+  connected: (localStream: MediaStream, remoteStream: MediaStream) => void;
+};
+
 export class PeerSession {
   private pc!: RTCPeerConnection;
+  private localStream!: MediaStream;
+  private events = new EventEmitter<PeerSessionEvents>();
 
-  start(
-    localStream: MediaStream,
-    onRemoteStream: (stream: MediaStream) => void,
-  ): void {
+  on<K extends keyof PeerSessionEvents>(
+    event: K,
+    listener: PeerSessionEvents[K],
+  ): () => void {
+    return this.events.on(event, listener);
+  }
+
+  start(localStream: MediaStream): void {
+    this.localStream = localStream;
     this.pc = new RTCPeerConnection(RTC_CONFIG);
 
     for (const track of localStream.getTracks()) {
@@ -46,13 +58,10 @@ export class PeerSession {
       remoteStream.addTrack(e.track);
     });
 
-    this.pc.addEventListener('iceconnectionstatechange', () => {
-      log.info('ICE connection state:', this.pc.iceConnectionState);
-      if (
-        this.pc.iceConnectionState === 'connected' ||
-        this.pc.iceConnectionState === 'completed'
-      ) {
-        onRemoteStream(remoteStream);
+    this.pc.addEventListener('connectionstatechange', () => {
+      log.info('Connection state:', this.pc.connectionState);
+      if (this.pc.connectionState === 'connected') {
+        this.events.emit('connected', this.localStream, remoteStream);
       }
     });
 

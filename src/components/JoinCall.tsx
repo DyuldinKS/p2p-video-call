@@ -1,8 +1,8 @@
 import {
-  createEffect,
   createResource,
   createSignal,
   Match,
+  onCleanup,
   Switch,
 } from 'solid-js';
 import { compressSdp, decompressSdp } from '../utils/sdp';
@@ -11,7 +11,7 @@ import { getLocalStream, PeerSession } from '../utils/webrtc';
 import SdpBox from './SdpBox';
 
 interface Props {
-  onConnected: (local: MediaStream, remote: MediaStream) => void;
+  onConnected: () => void;
   onBack: () => void;
   initialOffer?: string;
 }
@@ -30,11 +30,6 @@ const JoinCall = (props: Props) => {
   const [submittedOffer, setSubmittedOffer] = createSignal<string | null>(
     props.initialOffer ?? null,
   );
-  const [pendingConnect, setPendingConnect] = createSignal<{
-    local: MediaStream;
-    remote: MediaStream;
-  } | null>(null);
-
   const [answerSdp] = createResource(submittedOffer, async (input) => {
     const compressed = extractCompressed(input);
     const sdp = await decompressSdp(compressed);
@@ -42,10 +37,11 @@ const JoinCall = (props: Props) => {
     const session = new PeerSession();
     callStore.setItem('peerSession', session);
     callStore.setItem('localStream', localStream);
-    session.start(localStream, (remote) => {
+    onCleanup(session.on('connected', (local, remote) => {
       callStore.setItem('remoteStream', remote);
-      setPendingConnect({ local: localStream, remote });
-    });
+      props.onConnected();
+    }));
+    session.start(localStream);
     return session.createAnswer(sdp);
   });
 
@@ -60,15 +56,9 @@ const JoinCall = (props: Props) => {
     setTimeout(() => setCopiedAnswer(false), 2000);
   };
 
-  createEffect(() => {
-    const conn = pendingConnect();
-    if (conn) props.onConnected(conn.local, conn.remote);
-  });
-
   const handleOffer = () => {
     const offerSdp = offerInput().trim();
     if (!offerSdp) return;
-    setPendingConnect(null);
     setSubmittedOffer(offerSdp);
   };
 

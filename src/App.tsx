@@ -17,8 +17,11 @@ const App = () => {
   const [view, setView] = createSignal<View>(initialOffer ? 'join' : 'landing');
   const [streams, setStreams] = createSignal<CallStreams | null>(null);
 
-  const onConnected = (local: MediaStream, remote: MediaStream) => {
-    setStreams({ local, remote });
+  const onConnected = () => {
+    setStreams({
+      local: callStore.getItem('localStream')!,
+      remote: callStore.getItem('remoteStream')!,
+    });
     setView('call');
   };
 
