@@ -49,6 +49,7 @@ const CallView = (props: Props) => {
           ref={remoteVideoEl}
           autoplay
           playsinline
+          aria-label="Remote video"
           class="w-full h-full object-contain"
         />
 
@@ -59,6 +60,7 @@ const CallView = (props: Props) => {
             autoplay
             playsinline
             muted
+            aria-label="Local video"
             class="w-full object-cover"
           />
         </div>
