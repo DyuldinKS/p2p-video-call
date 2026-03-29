@@ -6,7 +6,7 @@
 
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { compressSdp, decompressSdp } from '../utils/sdp';
-import { store, setStore } from '../utils/callStore';
+import { setStore } from '../utils/callStore';
 import { getLocalStream, PeerSession } from '../utils/webrtc';
 import SdpBox from './SdpBox';
 

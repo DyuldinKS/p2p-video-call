@@ -65,8 +65,8 @@ export class PeerSession {
     this.localStream = localStream;
     this.pc = new RTCPeerConnection(RTC_CONFIG);
 
-    for (const track of localStream.getTracks()) {
-      this.pc.addTrack(track, localStream);
+    for (const track of this.localStream.getTracks()) {
+      this.pc.addTrack(track, this.localStream);
     }
 
     const remoteStream = new MediaStream();
