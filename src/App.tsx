@@ -8,9 +8,10 @@ import StartCall from './components/StartCall';
 type View = 'landing' | 'start' | 'join' | 'call';
 
 const App = () => {
-  const initialOffer = location.pathname.slice(1) || undefined;
+  const base = import.meta.env.BASE_URL;
+  const initialOffer = location.pathname.slice(base.length) || undefined;
   if (initialOffer) {
-    history.replaceState(null, '', '/');
+    history.replaceState(null, '', base);
   }
   const [view, setView] = createSignal<View>(initialOffer ? 'join' : 'landing');
 
@@ -30,7 +31,7 @@ const App = () => {
 
   createEffect(() => {
     view();
-    history.replaceState(null, '', '/');
+    history.replaceState(null, '', base);
   });
 
   return (

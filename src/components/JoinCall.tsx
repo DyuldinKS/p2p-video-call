@@ -20,7 +20,7 @@ interface Props {
 // Accepts a full join URL (http://host/<compressed>) or a plain compressed SDP.
 const extractCompressed = (input: string): string => {
   try {
-    return new URL(input).pathname.slice(1) || input;
+    return new URL(input).pathname.slice(import.meta.env.BASE_URL.length) || input;
   } catch {
     return input;
   }

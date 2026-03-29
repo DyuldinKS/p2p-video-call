@@ -45,7 +45,7 @@ const StartCall = (props: Props) => {
       setOfferSdp(sdp);
       setStep('offer-ready');
       const compressed = await compressSdp(sdp);
-      const url = `${location.origin}/${compressed}`;
+      const url = `${location.origin}${import.meta.env.BASE_URL}${compressed}`;
       setJoinUrl(url);
 
       if (localStorage.getItem('devAutoCopy') === 'true') {
